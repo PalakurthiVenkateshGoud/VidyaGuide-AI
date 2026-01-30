@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
-from backend.agent.resume_parser import extract_skills
-from backend.agent.career_matcher import match_careers
-from backend.agent.explainer import explain_career_fit
-from backend.agent.pdf_generator import generate_roadmap_pdf
+from agent.resume_parser import extract_skills
+from agent.career_matcher import match_careers
+from agent.explainer import explain_career_fit
+from agent.pdf_generator import generate_pdf
+
 
 app = FastAPI(
     title="VidyaGuide AI Agent",
