@@ -2,32 +2,33 @@ import streamlit as st
 import requests
 
 # --------------------------------
-# Page Configuration
+# CONFIG
 # --------------------------------
+BACKEND_URL = "https://vidyaguide-backend.onrender.com"
+
 st.set_page_config(
     page_title="VidyaGuide AI Agent",
     layout="centered"
 )
 
 # --------------------------------
-# Header
+# HEADER
 # --------------------------------
 st.title("🎓 VidyaGuide AI Agent")
 st.caption("Your personal career planning & skill mentor")
-
 st.markdown("---")
 
 # --------------------------------
-# Resume Input
+# RESUME INPUT
 # --------------------------------
 resume_text = st.text_area(
     "📄 Paste your resume text below",
-    height=200,
-    placeholder="Example: I have experience in Python, SQL, Excel..."
+    height=220,
+    placeholder="Example: I have experience in Python, SQL, Excel, data analysis..."
 )
 
 # --------------------------------
-# Analyze Button
+# ANALYZE BUTTON
 # --------------------------------
 if st.button("🔍 Analyze Career Path"):
 
@@ -35,32 +36,41 @@ if st.button("🔍 Analyze Career Path"):
         st.warning("Please paste your resume text.")
     else:
         with st.spinner("Analyzing your profile..."):
-            response = requests.post(
-                "http://127.0.0.1:8000/analyze",
-                params={"resume_text": resume_text}
-            )
+            try:
+                response = requests.post(
+                    f"{BACKEND_URL}/analyze",
+                    params={"resume_text": resume_text},
+                    timeout=60
+                )
+                response.raise_for_status()
+                data = response.json()
 
-        data = response.json()
+            except Exception as e:
+                st.error("Backend is not reachable. Please try again later.")
+                st.stop()
 
+        # --------------------------------
+        # RESULTS
+        # --------------------------------
         st.success("Analysis Complete!")
         st.markdown("---")
 
         # --------------------------------
-        # Skills Identified
+        # SKILLS
         # --------------------------------
         st.subheader("🧠 Skills Identified")
-        st.write(", ".join(data["skills_found"]))
+        st.write(", ".join(data.get("skills_found", [])))
 
         st.markdown("---")
 
         # --------------------------------
-        # Career Recommendations
+        # CAREER RECOMMENDATIONS
         # --------------------------------
         st.subheader("🎯 Career Recommendations")
 
-        for career in data["career_recommendations"]:
-            st.markdown(f"### {career['role']}")
+        for career in data.get("career_recommendations", []):
 
+            st.markdown(f"### {career['role']}")
             st.progress(career["match_score"] / 100)
             st.write(f"Match Score: **{career['match_score']}%**")
 
@@ -71,29 +81,32 @@ if st.button("🔍 Analyze Career Path"):
 
             # Explainable AI (blue box)
             st.info(career["explanation"])
-
             st.markdown("---")
 
         # --------------------------------
-        # Download PDF Roadmap (BEST PRACTICE)
+        # DOWNLOAD PDF ROADMAP
         # --------------------------------
         st.subheader("⬇️ Download Learning Roadmap")
 
-        pdf_response = requests.post(
-            "http://127.0.0.1:8000/download-roadmap",
-            params={"resume_text": resume_text}
-        )
+        try:
+            pdf_response = requests.post(
+                f"{BACKEND_URL}/download-roadmap",
+                params={"resume_text": resume_text},
+                timeout=60
+            )
+            pdf_response.raise_for_status()
 
-        st.download_button(
-            label="📄 Download Personalized PDF Roadmap",
-            data=pdf_response.content,
-            file_name="VidyaGuide_Learning_Roadmap.pdf",
-            mime="application/pdf"
-        )
+            st.download_button(
+                label="📄 Download Personalized PDF Roadmap",
+                data=pdf_response.content,
+                file_name="VidyaGuide_Learning_Roadmap.pdf",
+                mime="application/pdf"
+            )
 
-        
+        except Exception:
+            st.error("Could not generate PDF at the moment.")
 
 # --------------------------------
-# Footer
+# FOOTER
 # --------------------------------
-st.caption("Powered by VidyaGuide AI Agent")
+st.caption("Powered by VidyaGuide AI Agent 🚀")
