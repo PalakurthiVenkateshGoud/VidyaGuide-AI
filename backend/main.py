@@ -4,8 +4,7 @@ from fastapi.responses import FileResponse
 from agent.resume_parser import extract_skills
 from agent.career_matcher import match_careers
 from agent.explainer import explain_career_fit
-from agent.pdf_generator import generate_pdf
-
+from agent.pdf_generator import generate_roadmap_pdf  # ✅ FIXED
 
 app = FastAPI(
     title="VidyaGuide AI Agent",
@@ -18,13 +17,14 @@ app = FastAPI(
 # -------------------------------
 @app.post("/analyze")
 def analyze_resume(resume_text: str):
-    # Extract skills from resume
+
+    # 1️⃣ Extract skills
     skills = extract_skills(resume_text)
 
-    # Match careers based on skills
+    # 2️⃣ Match careers
     careers = match_careers(skills)
 
-    # Add explainable AI reasoning
+    # 3️⃣ Add explanations
     for career in careers:
         career["explanation"] = explain_career_fit(
             career["role"],
@@ -43,6 +43,8 @@ def analyze_resume(resume_text: str):
 # -------------------------------
 @app.post("/download-roadmap")
 def download_roadmap(resume_text: str):
+
+    # 1️⃣ Re-run analysis (IMPORTANT)
     skills = extract_skills(resume_text)
     careers = match_careers(skills)
 
@@ -53,8 +55,13 @@ def download_roadmap(resume_text: str):
             career["missing_skills"]
         )
 
-    file_path = generate_roadmap_pdf(careers, skills)
+    # 2️⃣ Generate PDF
+    file_path = generate_roadmap_pdf(
+        careers=careers,
+        skills=skills
+    )
 
+    # 3️⃣ Return file
     return FileResponse(
         path=file_path,
         media_type="application/pdf",
