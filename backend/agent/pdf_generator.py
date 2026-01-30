@@ -2,7 +2,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
 
-def generate_roadmap_pdf(careers, skills, filename="learning_roadmap.pdf"):
+def generate_pdf(careers, skills, filename="learning_roadmap.pdf"):
     c = canvas.Canvas(filename, pagesize=A4)
     width, height = A4
 
