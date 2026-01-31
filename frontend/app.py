@@ -1,9 +1,9 @@
 import streamlit as st
 import requests
 
-# --------------------------------
+# -------------------------------
 # CONFIG
-# --------------------------------
+# -------------------------------
 BACKEND_URL = "https://vidyaguide-backend.onrender.com"
 
 st.set_page_config(
@@ -11,28 +11,28 @@ st.set_page_config(
     layout="centered"
 )
 
-# --------------------------------
+# -------------------------------
 # HEADER
-# --------------------------------
+# -------------------------------
 st.title("🎓 VidyaGuide AI Agent")
 st.caption("Your personal career planning & skill mentor")
 st.markdown("---")
 
-# --------------------------------
+# -------------------------------
 # RESUME INPUT
-# --------------------------------
+# -------------------------------
 resume_text = st.text_area(
     "📄 Paste your resume text below",
     height=220,
     placeholder="Example: I have experience in Python, SQL, Excel, data analysis..."
 )
 
-# --------------------------------
+# -------------------------------
 # ANALYZE BUTTON
-# --------------------------------
+# -------------------------------
 if st.button("🔍 Analyze Career Path"):
 
-    if not resume_text.strip():
+    if resume_text.strip() == "":
         st.warning("Please paste your resume text.")
         st.stop()
 
@@ -44,64 +44,65 @@ if st.button("🔍 Analyze Career Path"):
                 timeout=60
             )
             response.raise_for_status()
-            data = response.json()
+            data = response.json()   # ✅ data DEFINED HERE
 
-        except requests.exceptions.RequestException:
-            st.error("❌ Backend is not reachable. Please try again later.")
+        except Exception as e:
+            st.error("Backend is not reachable. Please try again later.")
             st.stop()
 
-    # --------------------------------
+    # -------------------------------
     # RESULTS
-    # --------------------------------
+    # -------------------------------
     st.success("Analysis Complete!")
     st.markdown("---")
 
-    # --------------------------------
-    # SKILLS IDENTIFIED
-    # --------------------------------
-    st.subheader("🧠 Skills Identified")
-
+    # -------------------------------
+    # SKILLS
+    # -------------------------------
     skills = data.get("skills_found", [])
+
+    st.subheader("🧠 Skills Identified")
     if skills:
         st.write(", ".join(skills))
     else:
-        st.write("No clear skills detected.")
+        st.info(
+            "🚀 Everyone starts somewhere!\n\n"
+            "No clear technical skills were detected yet. "
+            "This is a great opportunity to begin learning in-demand skills and shape your career journey."
+        )
 
     st.markdown("---")
 
-    # --------------------------------
+    # -------------------------------
     # CAREER RECOMMENDATIONS
-    # --------------------------------
-    st.subheader("🎯 Career Recommendations")
-
+    # -------------------------------
     careers = data.get("career_recommendations", [])
 
+    st.subheader("🎯 Career Recommendations")
+
     if not careers:
-        st.warning("No career recommendations found.")
+        st.warning(
+            "🌱 No career matches found right now.\n\n"
+            "Start with foundational skills like programming, data analysis, or communication. "
+            "Consistency beats talent when talent doesn’t work consistently."
+        )
     else:
         for career in careers:
             st.markdown(f"### {career['role']}")
+            st.progress(career["match_score"] / 100)
+            st.write(f"Match Score: **{career['match_score']}%**")
 
-            score = career.get("match_score", 0)
-            st.progress(score / 100)
-            st.write(f"Match Score: **{score}%**")
-
-            missing = career.get("missing_skills", [])
-            if missing:
-                st.write("❌ Missing Skills:", ", ".join(missing))
+            if career["missing_skills"]:
+                st.write("❌ Missing Skills:", ", ".join(career["missing_skills"]))
             else:
                 st.write("✅ Fully matched for this role")
 
-            # Explainable AI (blue info box)
-            explanation = career.get("explanation", "")
-            if explanation:
-                st.info(explanation)
-
+            st.info(career["explanation"])
             st.markdown("---")
 
-    # --------------------------------
+    # -------------------------------
     # DOWNLOAD PDF ROADMAP
-    # --------------------------------
+    # -------------------------------
     st.subheader("⬇️ Download Learning Roadmap")
 
     try:
@@ -119,10 +120,10 @@ if st.button("🔍 Analyze Career Path"):
             mime="application/pdf"
         )
 
-    except requests.exceptions.RequestException:
-        st.error("❌ Could not generate PDF at the moment.")
+    except Exception:
+        st.error("Could not generate PDF at the moment.")
 
-# --------------------------------
+# -------------------------------
 # FOOTER
-# --------------------------------
+# -------------------------------
 st.caption("Powered by VidyaGuide AI Agent 🚀")
